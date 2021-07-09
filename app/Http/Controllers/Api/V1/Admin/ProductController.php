@@ -9,9 +9,19 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use App\Repositories\ProductRepositoryInterface;
+use App\Services\ProductService;
 
 class ProductController extends Controller
 {
+    protected $productRepository;
+    protected $productService;
+
+    public function __construct(ProductRepositoryInterface $productRepository, ProductService $productService)
+    {
+        $this->productRepository = $productRepository;
+        $this->productService = $productService;
+    }
     /**
      * Display a listing of the resource.
      *
@@ -102,8 +112,8 @@ class ProductController extends Controller
             'name' => 'required|string|max:255',
             'category_id' => 'required',
             'materials' => 'required|string',
-//            'weaving' => 'string',
-//            'info' => 'string',
+            //            'weaving' => 'string',
+            //            'info' => 'string',
             'price' => 'required|gt:0',
             'color' => 'required|string',
             'size_l' => 'required',
@@ -117,24 +127,8 @@ class ProductController extends Controller
         ]);
         //Set Data Object
         $product = new Product();
-        $product->code = $request->code;
-        $product->name = $request->name;
-        $product->category_id = $request->category_id;
-        $product->package_id = $request->package_id;
-        $product->color = $request->color;
-        $product->price = $request->price;
-        $product->materials = $request->materials;
-        $product->weaving = $request->weaving;
-        $product->info = $request->info;
-        $product->size_l = $request->size_l;
-        $product->size_w = $request->size_w;
-        $product->size_h = $request->size_h;
-
-        $product->ctn_qty = $request->ctn_qty;
-        $product->ctn_l = $request->ctn_l;
-        $product->ctn_w = $request->ctn_w;
-        $product->ctn_h = $request->ctn_h;
-        $product->cbm = number_format(($request->ctn_l * $request->ctn_w * $request->ctn_h) / 1000000, 3, '.', '');;
+        $params  =  $request->all();
+        $params['cbm'] =  number_format(($request->ctn_l * $request->ctn_w * $request->ctn_h) / 1000000, 3, '.', '');
 
         if ($request->hasFile('images')) {
             $images_path = [];
@@ -142,15 +136,17 @@ class ProductController extends Controller
             $types = $request->types;
             foreach ($images as $key => $image) {
                 $tmp = [];
-                $path = Storage::putFile('products', $image);
+                //$path = Storage::putFile('products', $image);
+                $path = $this->productService->upload($image);
                 $tmp['type'] = $types[$key];
                 $tmp['url'] = '/storage/' . $path;
                 $images_path[] = $tmp;
             }
-            $product->images = json_encode($images_path);
+            // $product->images = json_encode($images_path);
+            $params['images'] = json_encode($images_path);
         }
         //Check status HTTP
-        if ($product->save()) {
+        if ($this->productRepository->create($params)) {
             return response()->json([
                 'status' => 200,
                 'message' => 'Product created successfully!',
@@ -220,38 +216,23 @@ class ProductController extends Controller
             'package_id' => 'required',
         ]);
         //Set Data Object
-        $product->code = $request->code;
-        $product->name = $request->name;
-        $product->category_id = $request->category_id;
-        $product->package_id = $request->package_id;
-        $product->color = $request->color;
-        $product->price = $request->price;
-        $product->materials = $request->materials;
-        $product->weaving = $request->weaving;
-        $product->info = $request->info;
-        $product->size_l = $request->size_l;
-        $product->size_w = $request->size_w;
-        $product->size_h = $request->size_h;
-
-        $product->ctn_qty = $request->ctn_qty;
-        $product->ctn_l = $request->ctn_l;
-        $product->ctn_w = $request->ctn_w;
-        $product->ctn_h = $request->ctn_h;
-        $product->cbm = number_format(($request->ctn_l * $request->ctn_w * $request->ctn_h) / 1000000, 3, '.', '');;
+        $params  =  $request->all();
+        $params['cbm'] =  number_format(($request->ctn_l * $request->ctn_w * $request->ctn_h) / 1000000, 3, '.', '');
         if ($request->hasFile('images')) {
             $images_path = json_decode($request->images_old);
             $images = $request->file('images');
             $types = $request->types;
             foreach ($images as $key => $image) {
                 $tmp = [];
-                $path = Storage::putFile('products', $image);
+                // $path = Storage::putFile('products', $image);
+                $path = $this->productService->upload($image);
                 $tmp['type'] = $types[$key];
                 $tmp['url'] = '/storage/' . $path;
                 $images_path[] = $tmp;
             }
-            $product->images = json_encode($images_path);
+            $params['images'] = json_encode($images_path);
         } else {
-            $product->images = $request->images_old;
+            $params['images'] = $request->images_old;
         }
         //Check status HTTP
         if ($product->save()) {

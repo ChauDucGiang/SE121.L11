@@ -9,6 +9,8 @@ class Product extends Model
 {
     use SoftDeletes;
 
+    protected $guarded = ['id'];
+
     public function category()
     {
         return $this->belongsTo('App\Models\Category', 'category_id');
@@ -24,9 +26,9 @@ class Product extends Model
         return $this->hasMany('App\Models\OrderDetail', 'product_id');
     }
 
-//    protected $appends = [
-//        'images'
-//    ];
+    //    protected $appends = [
+    //        'images'
+    //    ];
 
     public function getWeavingAttribute()
     {
@@ -34,7 +36,6 @@ class Product extends Model
             return '';
         }
         return $this->attributes['weaving'];
-
     }
 
     public function getInfoAttribute()
