@@ -75,14 +75,15 @@
                     <template slot-scope="{data}">
                         <vs-tr :key="indextr" v-for="(tr, indextr) in data">
                             <vs-td>
-                                {{indextr+1}}
+                                {{ indextr + 1 }}
                             </vs-td>
 
                             <vs-td :data="data[indextr].name">
                                 <router-link
                                     :to="{name: 'CategoryShow', params:{id:(data[indextr].parent_id)?data[indextr].category.id:data[indextr].id}}">
                                     {{
-                                    (data[indextr].parent_id)?data[indextr].category.name:data[indextr].name }}
+                                        (data[indextr].parent_id) ? data[indextr].category.name : data[indextr].name
+                                    }}
                                 </router-link>
 
                             </vs-td>
@@ -90,13 +91,13 @@
                             <vs-td :data="data[indextr].name">
                                 <router-link
                                     :to="{name: 'ProductList', query:{subcategory_id:data[indextr].id, category_id:data[indextr].category.id}}">
-                                    {{(data[indextr].parent_id)?data[indextr].name:''}}
+                                    {{ (data[indextr].parent_id) ? data[indextr].name : '' }}
                                 </router-link>
 
                             </vs-td>
 
                             <vs-td :data="data[indextr].created">
-                                {{(data[indextr].created)}}
+                                {{ (data[indextr].created) }}
                             </vs-td>
 
                             <vs-td>
@@ -126,154 +127,154 @@
 </template>
 
 <script>
-    import vSelect from 'vue-select'
+import vSelect from 'vue-select'
 
 
-    // Cell Renderer
-    import {mapState} from "vuex";
+// Cell Renderer
+import {mapState} from "vuex";
 
 
-    export default {
-        components: {
-            vSelect,
-        },
-        data() {
-            return {
-                isEdit: false,
-                categoryId: '',
-                titleSubCategory: 'Create SubCategory',
+export default {
+    components: {
+        vSelect,
+    },
+    data() {
+        return {
+            isEdit: false,
+            categoryId: '',
+            titleSubCategory: 'Create SubCategory',
 
-                form: {
-                    subcategory: {
-                        name: '',
-                        parent_id: this.$route.params.id,
-                    },
+            form: {
+                subcategory: {
+                    name: '',
+                    parent_id: this.$route.params.id,
                 },
-                popupCreateSubActive: false,
-            }
+            },
+            popupCreateSubActive: false,
+        }
+    },
+    computed: {
+        categories() {
+            return this.$store.state.category.categories;
+            // return cat.filter(item => item.parent_id === this.$route.params.id);
         },
-        computed: {
-            categories() {
-                return this.$store.state.category.categories;
-                // return cat.filter(item => item.parent_id === this.$route.params.id);
-            },
-            listCategory() {
-                return this.$store.state.category.listCategory;
-            },
-            errors() {
-                return this.$store.state.category.errors;
-            },
-            ...mapState({
-                user: state => state.auth.user
+        listCategory() {
+            return this.$store.state.category.listCategory;
+        },
+        errors() {
+            return this.$store.state.category.errors;
+        },
+        ...mapState({
+            user: state => state.auth.user
+        })
+    },
+    methods: {
+        popupShow() {
+            this.popupCreateSubActive = true;
+            this.titleCategory = 'Create SubCategory';
+            this.isEdit = false;
+            this.form.subcategory.name = '';
+        },
+        openConfirm(id) {
+            this.id = id
+            this.$vs.dialog({
+                type: 'confirm',
+                color: 'danger',
+                title: `Delete`,
+                text: 'Are you sure you want to delete selected items?',
+                accept: this.remove
             })
         },
-        methods: {
-            popupShow() {
-                this.popupCreateSubActive = true;
-                this.titleCategory = 'Create SubCategory';
-                this.isEdit = false;
-                this.form.subcategory.name = '';
-            },
-            openConfirm(id) {
-                this.id = id
-                this.$vs.dialog({
-                    type: 'confirm',
-                    color: 'danger',
-                    title: `Delete`,
-                    text: 'Are you sure you want to delete selected items?',
-                    accept: this.remove
-                })
-            },
-            subAdd(id) {
-                this.form.subcategory.parent_id = id;
-                this.popupCreateSubActive = true;
-                this.isEdit = false;
-            },
-            edit(category) {
-                this.categoryId = category.id;
-                this.isEdit = true;
+        subAdd(id) {
+            this.form.subcategory.parent_id = id;
+            this.popupCreateSubActive = true;
+            this.isEdit = false;
+        },
+        edit(category) {
+            this.categoryId = category.id;
+            this.isEdit = true;
 
-                if (category.parent_id) {
-                    this.popupCreateSubActive = true;
-                    this.titleSubCategory = 'Edit SubCategory';
-                    this.form.subcategory.name = category.name;
-                    this.form.subcategory.parent_id = category.category.id;
-                } else {
-                    this.popupCreateActive = true;
-                    this.titleCategory = 'Edit Category';
-                    this.form.category.name = category.name;
-                }
-            },
-            remove() {
-                this.$store
-                    .dispatch("category/DELETE_CATEGORY", this.id)
-                    // go to which page after successfully login
-                    .then(
+            if (category.parent_id) {
+                this.popupCreateSubActive = true;
+                this.titleSubCategory = 'Edit SubCategory';
+                this.form.subcategory.name = category.name;
+                this.form.subcategory.parent_id = category.category.id;
+            } else {
+                this.popupCreateActive = true;
+                this.titleCategory = 'Edit Category';
+                this.form.category.name = category.name;
+            }
+        },
+        remove() {
+            this.$store
+                .dispatch("category/DELETE_CATEGORY", this.id)
+                // go to which page after successfully login
+                .then(
+                    this.$vs.notify({
+                        title: 'Success',
+                        text: 'Category deleted successfully!',
+                        color: 'success',
+                        iconPack: 'feather',
+                        icon: 'icon-check',
+                        position: 'top-right',
+                    }));
+        },
+        submitStoreSubCategory(isEdit) {
+            let uri = 'category/STORE_CATEGORY';
+            let formData = new FormData()
+            formData.append('name', this.form.subcategory.name);
+            formData.append('parent_id', this.form.subcategory.parent_id);
+            let data = formData;
+            if (isEdit) {
+                const id = this.categoryId;
+                formData.append('_method', 'PUT');
+                uri = 'category/UPDATE_CATEGORY';
+                data = {params: formData, id};
+            }
+            this.$store
+                .dispatch(`${uri}`, data)
+                // go to which page after successfully login
+                .then(() => {
                         this.$vs.notify({
                             title: 'Success',
-                            text: 'Category deleted successfully!',
+                            text: 'Category created successfully!',
                             color: 'success',
                             iconPack: 'feather',
                             icon: 'icon-check',
                             position: 'top-right',
-                        }));
-            },
-            submitStoreSubCategory(isEdit) {
-                let uri = 'category/STORE_CATEGORY';
-                let formData = new FormData()
-                formData.append('name', this.form.subcategory.name);
-                formData.append('parent_id', this.form.subcategory.parent_id);
-                let data = formData;
-                if (isEdit) {
-                    const id = this.categoryId;
-                    formData.append('_method', 'PUT');
-                    uri = 'category/UPDATE_CATEGORY';
-                    data = {params: formData, id};
-                }
-                this.$store
-                    .dispatch(`${uri}`, data)
-                    // go to which page after successfully login
-                    .then(() => {
-                            this.$vs.notify({
-                                title: 'Success',
-                                text: 'Category created successfully!',
-                                color: 'success',
-                                iconPack: 'feather',
-                                icon: 'icon-check',
-                                position: 'top-right',
-                            });
-                            this.popupCreateSubActive = false;
-                            this.$store.dispatch('category/FETCH_SUBCATEGORIES', this.$route.params.id).catch(err => {
-                                console.error(err)
-                            })
-                        }
-                    );
-            },
+                        });
+                        this.popupCreateSubActive = false;
+                        this.$store.dispatch('category/FETCH_SUBCATEGORIES', this.$route.params.id).catch(err => {
+                            console.error(err)
+                        })
+                    }
+                );
         },
-        mounted() {
-            if (this.$vs.rtl) {
-                const header = this.$refs.agGridTable.$el.querySelector('.ag-header-container')
-                header.style.left = `-${String(Number(header.style.transform.slice(11, -3)) + 9)}px`
-            }
-        },
-        created() {
-            this.$store.dispatch('category/FETCH_SUBCATEGORIES', this.$route.params.id).catch(err => {
-                console.error(err)
-            })
+    },
+    mounted() {
+        if (this.$vs.rtl) {
+            const header = this.$refs.agGridTable.$el.querySelector('.ag-header-container')
+            header.style.left = `-${String(Number(header.style.transform.slice(11, -3)) + 9)}px`
         }
+    },
+    created() {
+        this.$store.dispatch('category/FETCH_SUBCATEGORIES', this.$route.params.id).catch(err => {
+            console.error(err)
+        })
     }
+}
 
 </script>
 
 <style lang="scss">
-    #page-user-list {
-        .user-list-filters {
-            .vs__actions {
-                position: absolute;
-                right: 0;
-                top: 50%;
-                transform: translateY(-58%);
-            }
+#page-user-list {
+    .user-list-filters {
+        .vs__actions {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-58%);
         }
     }
+}
 </style>

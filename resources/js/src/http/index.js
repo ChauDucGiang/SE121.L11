@@ -11,10 +11,10 @@ import axios from 'axios';
 import VueAxios from 'vue-axios';
 
 // axios.defaults.baseURL = 'http://dcsoftware.tk/api';
-axios.defaults.baseURL = 'http://127.0.0.1:8000/api';
+axios.defaults.baseURL = 'http://local.doan/api';
 
 Vue.use(VueAxios, axios);
 export default {
     // root: 'http://dcsoftware.tk/api'
-    root: 'http://127.0.0.1:8000/api'
+    root: 'http://local.doan/api'
 };
